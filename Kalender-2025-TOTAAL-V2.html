@@ -57,12 +57,8 @@
       font-weight: 900;
     }
 
-    .holiday {
+    .holiday-marked {
       background-color: #ffe4b3 !important;
-    }
-
-    .religious-holiday {
-      background-color: #ccffcc !important;
     }
 
     caption {
@@ -112,20 +108,7 @@
       font-size: 0.6em;
     }
 
-    $1
-      font-weight: normal;
-      border: 1px solid #ccc;
-      padding: 0;
-      height: 12px;
-      line-height: 10px;
-      text-align: center;
-    }
-
-    .mini-month caption {
-      font-weight: bold;
-      font-size: 0.9em;
-      margin-bottom: 2px;
-    }.mini-month th, .mini-month td {
+    .mini-month th, .mini-month td {
       font-weight: normal;
       border: 1px solid #ccc;
       padding: 0;
@@ -133,22 +116,11 @@
       line-height: 12px;
       text-align: center;
     }
-
-$1
-.calendar-container {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: flex-start;
-      flex-wrap: nowrap;
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-</style>
+  </style>
 </head>
 <body>
   <div class="clock" id="clock" style="font-size: 8em; font-weight: bold; text-align: center; margin-bottom: 20px; color: #003366;">00:00:00</div>
-  <div class="calendar-container" id="calendar" style="display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center; align-items: flex-start; gap: 20px;"></div>
+  <div class="calendar-container" id="calendar"></div>
   <div id="full-year" class="full-year-container"></div>
   <div id="weather-forecast" style="margin-top:40px; display:flex; justify-content:center; gap:20px; flex-wrap:wrap; font-size:1.2em; color:#003366;"></div>
   <div class="news-ticker"><span id="news-content">Laden van NOS nieuws...</span></div>
@@ -172,20 +144,27 @@ $1
       return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
     }
 
+    const officialHolidays = [
+  ...[
+    '2025-01-01',
+    '2025-04-18',
+    '2025-04-20',
+    '2025-04-21',
+    '2025-04-27',
+    '2025-05-05',
+    '2025-05-29',
+    '2025-06-08',
+    '2025-06-09',
+    '2025-12-25',
+    '2025-12-26'
+  ].map(dateStr => {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  })
+];
+
     function generateCalendar(monthOffset, mini = false) {
-      const officialHolidays = [
-        '2025-01-01', // Nieuwjaarsdag
-        '2025-04-18', // Goede Vrijdag
-        '2025-04-20', // Pasen (1e dag)
-        '2025-04-21', // Pasen (2e dag)
-        '2025-04-27', // Koningsdag
-        '2025-05-05', // Bevrijdingsdag
-        '2025-05-29', // Hemelvaart
-        '2025-06-08', // Pinksteren (1e dag)
-        '2025-06-09', // Pinksteren (2e dag)
-        '2025-12-25', // Kerst (1e dag)
-        '2025-12-26'  // Kerst (2e dag)
-      ];
       const today = new Date();
       const year = 2025;
       const date = new Date(year, monthOffset, 1);
@@ -230,13 +209,17 @@ $1
           if (weekDate.getMonth() === date.getMonth()) {
             const isoDate = weekDate.toISOString().split('T')[0];
             cell.textContent = weekDate.getDate();
-            
+
             if (
               weekDate.getDate() === today.getDate() &&
               weekDate.getMonth() === today.getMonth() &&
               weekDate.getFullYear() === today.getFullYear()
             ) {
               cell.classList.add('today');
+            }
+
+            if (officialHolidays.includes(isoDate)) {
+              cell.classList.add('holiday-marked');
             }
           } else {
             cell.textContent = '';
@@ -252,27 +235,27 @@ $1
     }
 
     function buildCalendars() {
-  const calendarContainer = document.getElementById('calendar');
-  const today = new Date();
-  const currentMonth = today.getMonth();
+      const calendarContainer = document.getElementById('calendar');
+      const today = new Date();
+      const currentMonth = today.getMonth();
 
-  [-1, 0, 1].forEach(offset => {
-    const cal = generateCalendar(currentMonth + offset);
-    const div = document.createElement('div');
-    div.classList.add('month');
-    div.appendChild(cal);
-    calendarContainer.appendChild(div);
-  });
+      [-1, 0, 1].forEach(offset => {
+        const cal = generateCalendar(currentMonth + offset);
+        const div = document.createElement('div');
+        div.classList.add('month');
+        div.appendChild(cal);
+        calendarContainer.appendChild(div);
+      });
 
-  const fullYearContainer = document.getElementById('full-year');
-  for (let i = 0; i < 12; i++) {
-    const cal = generateCalendar(i, true);
-    const div = document.createElement('div');
-    div.classList.add('mini-month');
-    div.appendChild(cal);
-    fullYearContainer.appendChild(div);
-  }
-}
+      const fullYearContainer = document.getElementById('full-year');
+      for (let i = 0; i < 12; i++) {
+        const cal = generateCalendar(i, true);
+        const div = document.createElement('div');
+        div.classList.add('mini-month');
+        div.appendChild(cal);
+        fullYearContainer.appendChild(div);
+      }
+    }
 
     async function loadNOSNews() {
       try {
